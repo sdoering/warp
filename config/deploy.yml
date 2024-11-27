@@ -23,7 +23,9 @@ builder:
 
 env:
   secret:
-    - WARP_SECRET_KEY
+    - WARP_SECRET_KEY 
+    - WARP_ADMIN_USER
+    - WARP_ADMIN_PASSWORD
   clear:
     WARP_DATABASE: "sqlite:////opt/warp/data/warp.db"
     WARP_DATABASE_INIT_SCRIPT: '["/opt/warp/sql/sqlite_schema.sql"]'

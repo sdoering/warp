@@ -51,9 +51,9 @@ RUN mkdir -p /opt/warp/data /opt/warp/sql && \
     chmod -R 755 /opt/warp
 
 COPY warp/sql/sqlite_schema.sql /opt/warp/sql/
-
-# Copy and set up entrypoint script
 COPY docker-entrypoint.sh /
+
+# Ensure entrypoint script has correct permissions
 RUN chmod +x /docker-entrypoint.sh && \
     chown warp:warp /docker-entrypoint.sh
 
