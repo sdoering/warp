@@ -35,8 +35,8 @@ RUN groupadd -g 1002 warp && \
     useradd -u 1002 -g warp -s /bin/false -M warp
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends libpq5 mime-support libpcre3 curl && \
-    rm -rf /var/lib/apt/lists/*
+    apt-get install -y --no-install-recommends libpq5 mime-support libpcre3 curl sqlite3 && \
+    rm  -rf /var/lib/apt/lists/*
 
 RUN \
     --mount=type=bind,from=compile-image,source=/opt/warp/wheel,target=./wheel \
