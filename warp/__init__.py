@@ -29,5 +29,5 @@ def create_app():
         app.register_blueprint(auth_ldap.bp)
     else:
         app.register_blueprint(auth.bp)
-
+    
     return app
