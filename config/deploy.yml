@@ -29,4 +29,4 @@ env:
     WARP_DATABASE_INIT_SCRIPT: '["/opt/warp/sql/sqlite_schema.sql"]'
 
 volumes:
-  - /var/lib/warp/data:/opt/warp/data
+  - /var/lib/warp/data:/opt/warp/data:rw
