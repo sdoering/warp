@@ -29,10 +29,3 @@ env:
 
 volumes:
   - /var/lib/warp/data:/opt/warp/data
-
-hooks:
-  pre-deploy:
-    remote:
-      - mkdir -p /var/lib/warp/data
-      - chown -R 1002:1002 /var/lib/warp/data
-      - chmod 755 /var/lib/warp/data
