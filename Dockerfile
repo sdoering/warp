@@ -50,7 +50,7 @@ RUN mkdir -p /opt/warp/data && \
     chown -R warp:warp /opt/warp && \
     chmod -R 755 /opt/warp
 
-COPY sql/sqlite_schema.sql /opt/warp/sql/
+COPY warp/sql/sqlite_schema.sql /opt/warp/sql/
 
 # Switch to non-root user
 USER warp

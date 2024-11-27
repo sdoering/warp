@@ -26,7 +26,7 @@ env:
     - WARP_SECRET_KEY
   clear:
     WARP_DATABASE: "sqlite:////opt/warp/data/warp.db"
-    WARP_DATABASE_INIT_SCRIPT: '["sql/sqlite_schema.sql"]'
+    WARP_DATABASE_INIT_SCRIPT: '["/opt/warp/sql/sqlite_schema.sql"]'
 
 volumes:
   - /var/lib/warp/data:/opt/warp/data
