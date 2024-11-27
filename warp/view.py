@@ -190,3 +190,7 @@ def zoneModify(zid):
     return flask.render_template('zone_modify.html',
                     zid = zid,
                     returnURL = returnURL)
+
+@bp.route("/up")
+def health():
+    return '', 200
