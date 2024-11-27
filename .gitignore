@@ -13,3 +13,8 @@ node_modules/
 /warp/static/dist/
 docker-compose.yml
 
+# Kamal deployment config
+config/deploy.production.yml
+config/deploy.staging.yml
+.env.production
+.env.staging
