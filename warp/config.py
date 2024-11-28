@@ -28,6 +28,13 @@ class DefaultSettings(object):
     # delay between retries
     DATABASE_INIT_RETRIES_DELAY = 2
 
+    # SQLite specific settings
+    SQLITE_TIMEOUT = 30  # Timeout in seconds for SQLite operations
+    SQLITE_BUSY_TIMEOUT = 5000  # Busy timeout in milliseconds
+    
+    # Modify this to handle both PostgreSQL and SQLite init scripts
+    DATABASE_INIT_SCRIPT = "sql/schema_sqlite.sql"  # or keep as is if using same schema
+
     # LDAP defaults
     LDAP_AUTH_TYPE = "SIMPLE"
     LDAP_STARTTLS = True
@@ -61,10 +68,19 @@ class DefaultSettings(object):
 
 class DevelopmentSettings(DefaultSettings):
 
-    DATABASE = "postgresql://postgres:postgres_password@127.0.0.1:5432/postgres"
+    # Comment out or remove PostgreSQL connection
+    # DATABASE = "postgresql://postgres:postgres_password@127.0.0.1:5432/postgres"
 
-    #DATABASE = "sqlite:///warp/db.sqlite"
-    #DATABASE_ARGS = {"pragmas": {"foreign_keys": "ON"}}
+    # Use SQLite instead
+    DATABASE = "sqlite:///warp.db"
+    DATABASE_ARGS = {
+        "pragmas": {
+            "foreign_keys": "ON",
+            "journal_mode": "WAL",  # Better concurrency support
+            "cache_size": -32000,   # 32MB cache
+            "synchronous": "NORMAL" # Good balance between safety and performance
+        }
+    }
 
     DATABASE_INIT_SCRIPT = [
         "sql/clean_db.sql",
@@ -102,10 +118,27 @@ def readEnvironmentSettings(app):
 
     app.config.update(res)
 
+def get_database_args(app):
+    """Get database arguments based on database type"""
+    db_url = app.config['DATABASE']
+    db_args = app.config.get('DATABASE_ARGS', {})
 
+    if db_url.startswith('sqlite:'):
+        # Ensure SQLite-specific settings are properly set
+        pragmas = db_args.get('pragmas', {})
+        if 'foreign_keys' not in pragmas:
+            pragmas['foreign_keys'] = 'ON'
+        if 'journal_mode' not in pragmas:
+            pragmas['journal_mode'] = 'WAL'
+        db_args['pragmas'] = pragmas
+        
+        # Add timeout settings
+        db_args['timeout'] = app.config.get('SQLITE_TIMEOUT', 30)
+        db_args['busy_timeout'] = app.config.get('SQLITE_BUSY_TIMEOUT', 5000)
+
+    return db_args
 
 def initConfig(app):
-
     if app.env != 'production':
         app.config.from_object(DevelopmentSettings)
     else:
@@ -117,3 +150,20 @@ def initConfig(app):
         raise Exception('SECRET_KEY must be defined or passed via WARP_SECRET_KEY environment variable')
     if app.config.get('DATABASE',None) is None:
         raise Exception('DATABASE must be defined or passed via WARP_DATABASE environment variable')
+
+    # Add database arguments processing
+    app.config['DATABASE_ARGS'] = get_database_args(app)
+
+# def initConfig(app):
+
+#     if app.env != 'production':
+#         app.config.from_object(DevelopmentSettings)
+#     else:
+#         app.config.from_object(ProductionSettings)
+
+#     readEnvironmentSettings(app)
+
+#     if app.config.get('SECRET_KEY',None) is None:
+#         raise Exception('SECRET_KEY must be defined or passed via WARP_SECRET_KEY environment variable')
+#     if app.config.get('DATABASE',None) is None:
+#         raise Exception('DATABASE must be defined or passed via WARP_DATABASE environment variable')
