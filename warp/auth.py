@@ -47,13 +47,12 @@ def login():
             
             if is_valid:
                 account_type = c[0]['account_type']
-
-            if account_type == ACCOUNT_TYPE_BLOCKED:
-                flask.flash("Your account is blocked.")
-            else:
-                flask.session['login'] = c[0]['login']
-                flask.session['login_time'] = utils.now()
-                return flask.redirect(flask.url_for('view.index'))
+                if account_type == ACCOUNT_TYPE_BLOCKED:
+                    flask.flash("Your account is blocked.")
+                else:
+                    flask.session['login'] = c[0]['login']
+                    flask.session['login_time'] = utils.now()
+                    return flask.redirect(flask.url_for('view.index'))
 
         else:
             flask.flash("Wrong username or password")
