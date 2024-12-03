@@ -4,4 +4,3 @@ jsonschema
 xlsxwriter
 orjson
 ldap3
-scrypt>=0.8.20

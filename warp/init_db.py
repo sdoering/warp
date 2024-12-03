@@ -2,7 +2,7 @@ import os
 import logging
 from flask import current_app
 from warp.db import DB, Users, ACCOUNT_TYPE_ADMIN
-from warp.password_utils import generate_password_hash
+from werkzeug.security import generate_password_hash
 
 # Set up logging
 logger = logging.getLogger(__name__)
