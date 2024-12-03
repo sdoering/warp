@@ -15,7 +15,7 @@ def create_app():
     initConfig(app)
 
     from . import db
-    db.init(app)
+    db.init_db(app)
 
     from . import view
     app.register_blueprint(view.bp)

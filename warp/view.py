@@ -1,6 +1,11 @@
 import flask
+from flask import g
 
-from warp.db import *
+from warp.db import (
+    db, Zone, ZoneAssign, User,
+    ZONE_ROLE_ADMIN, ZONE_ROLE_USER, ZONE_ROLE_VIEWER,
+    ACCOUNT_TYPE_GROUP
+)
 from . import utils
 from . import blob_storage
 
@@ -8,17 +13,17 @@ bp = flask.Blueprint('view', __name__)
 
 @bp.context_processor
 def headerDataInit():
-
     headerDataL = []
 
-    zoneCursor = Zone.select(Zone.id, Zone.name) \
-                     .join(UserToZoneRoles, on=(Zone.id == UserToZoneRoles.zid)) \
-                     .where(UserToZoneRoles.login == flask.g.login) \
-                     .order_by(Zone.name)
+    zoneCursor = db.session.query(Zone.id, Zone.name)\
+        .join(ZoneAssign, Zone.id == ZoneAssign.zid)\
+        .filter(ZoneAssign.login == g.login)\
+        .order_by(Zone.name)\
+        .all()
 
     for z in zoneCursor:
         headerDataL.append(
-            {"text": z['name'], "endpoint": "view.zone", "view_args": {"zid":str(z['id'])} })
+            {"text": z.name, "endpoint": "view.zone", "view_args": {"zid": str(z.id)}})
 
     if headerDataL:
         headerDataL.insert(0,{"text": "Bookings", "endpoint": "view.bookings", "view_args": {"report":""} })
@@ -64,9 +69,9 @@ def bookings(report):
 @bp.route("/zone/<zid>")
 def zone(zid):
 
-    zoneRole = UserToZoneRoles.select(UserToZoneRoles.zone_role) \
-                              .where( (UserToZoneRoles.zid == zid) & (UserToZoneRoles.login == flask.g.login) ) \
-                              .scalar()
+    zoneRole = db.session.query(ZoneAssign.zone_role)\
+        .filter(ZoneAssign.zid == zid, ZoneAssign.login == g.login)\
+        .scalar()
 
     if zoneRole is None:
         flask.abort(403)
@@ -108,7 +113,7 @@ def zoneImage(zid):
         if zoneRole is None:
             flask.abort(403)
 
-    blobIdQuery = Zone.select(Zone.iid.alias('id')).where(Zone.id == zid)
+    blobIdQuery = db.session.query(Zone.iid.label('id')).filter(Zone.id == zid)
 
     return blob_storage.createBlobResponse(blobIdQuery=blobIdQuery)
 
@@ -144,9 +149,9 @@ def groupAssign(group_login):
     if not flask.g.isAdmin:
         flask.abort(403)
 
-    groupName = Users.select(Users.name) \
-                     .where( (Users.login == group_login) & (Users.account_type >= ACCOUNT_TYPE_GROUP) ) \
-                     .scalar()
+    groupName = db.session.query(User.name)\
+        .filter(User.login == group_login, User.account_type >= ACCOUNT_TYPE_GROUP)\
+        .scalar()
 
     if groupName is None:
         flask.abort(404)
@@ -165,9 +170,9 @@ def zoneAssign(zid):
     if not flask.g.isAdmin:
         flask.abort(403)
 
-    zoneName = Zone.select(Zone.name) \
-                     .where( Zone.id == zid ) \
-                     .scalar()
+    zoneName = db.session.query(Zone.name)\
+        .filter(Zone.id == zid)\
+        .scalar()
 
     if zoneName is None:
         flask.abort(404)
