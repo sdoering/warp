@@ -7,6 +7,7 @@ import playhouse.db_url
 import click
 from flask.cli import with_appcontext
 from flask import current_app
+from werkzeug.security import generate_password_hash
 
 DB = None
 
@@ -86,6 +87,25 @@ def init(app):
         with app.app_context():
             initDB()
 
+def update_admin_credentials():
+    """Update admin credentials from environment variables if configured"""
+    admin_user = current_app.config.get('WARP_ADMIN_USER')
+    admin_pass = current_app.config.get('WARP_ADMIN_PASSWORD')
+    
+    if admin_user and admin_pass:
+        print(f"Updating credentials for admin user: {admin_user}")
+        with DB.atomic():
+            updated = Users.update({
+                Users.password: generate_password_hash(admin_pass)
+            }).where(
+                (Users.login == admin_user) & 
+                (Users.account_type == ACCOUNT_TYPE_ADMIN)
+            ).execute()
+            if updated:
+                print("Admin credentials updated successfully")
+            else:
+                print("Warning: No admin user found to update")
+
 def initDB(force = False):
 
     initScripts = current_app.config.get('DATABASE_INIT_SCRIPT')
@@ -135,6 +155,7 @@ def initDB(force = False):
                 DB.execute_sql(f"CREATE TABLE IF NOT EXISTS {_INITIALIZED_TABLE}();")
 
             print('The database initialized.')
+            update_admin_credentials()
             break
 
         except OperationalError:
