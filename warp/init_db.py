@@ -1,7 +1,7 @@
 import os
 import logging
-from warp import db
-from warp.model import *
+from flask import current_app
+from warp.db import DB, Users, ACCOUNT_TYPE_ADMIN
 from warp.password_utils import generate_password_hash
 
 # Set up logging
@@ -9,11 +9,6 @@ logger = logging.getLogger(__name__)
 
 def init_db():
     logger.info("Starting database initialization")
-    # Create tables if they don't exist
-    logger.info("Creating database tables")
-    tables = [Blob, User, Group, Zone, ZoneAssign, Seat, SeatAssign, Book]
-    db.database.create_tables(tables, safe=True)  # safe=True means it won't recreate existing tables
-    logger.info(f"Created {len(tables)} tables successfully")
 
     # Check if we should skip admin user management
     skip_admin_setup = os.environ.get('WARP_SKIP_ADMIN_SETUP', '').lower() in ('true', '1', 'yes')
@@ -33,21 +28,29 @@ def init_db():
     admin_hash = generate_password_hash(admin_password)
     
     try:
-        admin = User.get(User.login == admin_user)
-        logger.info(f"Found existing admin user: {admin_user}")
-        admin.password = admin_hash
-        admin.account_type = 10  # Admin type
-        admin.save()
-        logger.info(f"Successfully updated existing admin user '{admin_user}'")
-    except User.DoesNotExist:
-        logger.info(f"No existing admin user found, creating new user: {admin_user}")
-        User.create(
-            login=admin_user,
-            password=admin_hash,
-            name='Admin',
-            account_type=10
-        )
-        logger.info(f"Successfully created new admin user '{admin_user}'")
+        # Check if admin exists using raw query
+        admin_exists = Users.select().where(Users.login == admin_user).exists()
+        
+        if admin_exists:
+            logger.info(f"Found existing admin user: {admin_user}")
+            Users.update({
+                Users.password: admin_hash,
+                Users.account_type: ACCOUNT_TYPE_ADMIN
+            }).where(Users.login == admin_user).execute()
+            logger.info(f"Successfully updated existing admin user '{admin_user}'")
+        else:
+            logger.info(f"No existing admin user found, creating new user: {admin_user}")
+            Users.insert({
+                Users.login: admin_user,
+                Users.password: admin_hash,
+                Users.name: 'Admin',
+                Users.account_type: ACCOUNT_TYPE_ADMIN
+            }).execute()
+            logger.info(f"Successfully created new admin user '{admin_user}'")
+            
+    except Exception as e:
+        logger.error(f"Error managing admin user: {e}")
+        raise
 
 if __name__ == '__main__':
     init_db()
