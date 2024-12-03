@@ -20,22 +20,25 @@ def init_db():
     skip_admin_setup = os.environ.get('WARP_SKIP_ADMIN_SETUP', '').lower() in ('true', '1', 'yes')
     
     if not skip_admin_setup:
+        # Get admin credentials from environment or config
         admin_user = os.environ.get('WARP_ADMIN_USER') or current_app.config.get('WARP_ADMIN_USER', 'wurstbrot')
         admin_password = os.environ.get('WARP_ADMIN_PASSWORD') or current_app.config.get('WARP_ADMIN_PASSWORD', 'mitSenf')
         
+        print(f"Setting up admin user: {admin_user}")
+        
+        # Always create or update the admin user
+        admin_hash = generate_password_hash(admin_password)
+        
         try:
             admin = User.get(User.login == admin_user)
-            # Update existing admin user if WARP_FORCE_ADMIN_UPDATE is set
-            if os.environ.get('WARP_FORCE_ADMIN_UPDATE', '').lower() in ('true', '1', 'yes'):
-                admin.password = generate_password_hash(admin_password)
-                admin.account_type = 10  # Ensure admin privileges
-                admin.save()
-                print(f"Updated admin user '{admin_user}'")
+            admin.password = admin_hash
+            admin.account_type = 10  # Admin type
+            admin.save()
+            print(f"Updated existing admin user '{admin_user}'")
         except User.DoesNotExist:
-            # Create new admin user
             User.create(
                 login=admin_user,
-                password=generate_password_hash(admin_password),
+                password=admin_hash,
                 name='Admin',
                 account_type=10
             )
