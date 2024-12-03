@@ -102,9 +102,10 @@ def initDB(force = False):
         try:
 
             with DB:
+                # SQLite needs to explicitly enable foreign key support
+                DB.execute_sql('PRAGMA foreign_keys = ON;')
 
                 if not force:
-
                     try:
                         DB.execute_sql(f"CREATE TABLE {_INITIALIZED_TABLE}();")
                     except DatabaseError:
@@ -114,12 +115,15 @@ def initDB(force = False):
                 print(f'Initializing DB force={force}')
 
                 for file in initScripts:
-
                     print(f'Executing SQL: {file}')
 
                     with current_app.open_resource(file) as f:
                         sql = f.read().decode('utf8')
-                        DB.execute(SQL(sql))
+                        # Split the SQL file into individual statements
+                        statements = sql.split(';')
+                        for statement in statements:
+                            if statement.strip():
+                                DB.execute_sql(statement + ';')
 
                 # in case it is cleaned up in the above scripts (or force == True)
                 DB.execute_sql(f"CREATE TABLE IF NOT EXISTS {_INITIALIZED_TABLE}();")
