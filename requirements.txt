@@ -1,6 +1,10 @@
-flask == 2.2.*
+flask>=2.2.0,<2.3.0
 flask-sqlalchemy>=3.0.0
+werkzeug>=2.2.0
+sqlalchemy>=1.4.0
 jsonschema
 xlsxwriter
 orjson
 ldap3
+pytest>=7.0.0
+pytest-flask>=1.2.0
