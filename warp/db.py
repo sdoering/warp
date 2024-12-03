@@ -55,7 +55,13 @@ def init(app):
     connStr = app.config['DATABASE']
     connArgs = app.config['DATABASE_ARGS'] if 'DATABASE_ARGS' in app.config else {}
 
-    DB = playhouse.db_url.connect(connStr, autoconnect=False, thread_safe=True, **connArgs)
+    # Handle SQLite connection parameters specially
+    if connStr.startswith('sqlite'):
+        # Remove busy_timeout from connArgs if it exists, as it's not supported
+        connArgs.pop('busy_timeout', None)
+        DB = playhouse.db_url.connect(connStr, autoconnect=False, thread_safe=True, **connArgs)
+    else:
+        DB = playhouse.db_url.connect(connStr, autoconnect=False, thread_safe=True, **connArgs)
 
     Blobs.bind(DB)
     Users.bind(DB)
