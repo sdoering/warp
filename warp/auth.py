@@ -26,12 +26,12 @@ def login():
     flask.session.clear()
 
     if flask.request.method == 'POST':
-        u = flask.request.form.get('login')
-        p = flask.request.form.get('password')
+        username = flask.request.form.get('login')
+        password = flask.request.form.get('password')
         
-        logger.info(f"Login attempt for user: {u}")
+        logger.info(f"Login attempt for user: {username}")
         
-        c = Users.select().where((Users.login == u) & (Users.account_type != ACCOUNT_TYPE_GROUP))
+        c = Users.select().where((Users.login == username) & (Users.account_type != ACCOUNT_TYPE_GROUP))
         
         logger.debug(f"Found {len(c)} matching users")
         
@@ -60,7 +60,7 @@ def login():
                 stored_hash = base64.b64decode(hash_parts[2])
                 
                 # Calculate hash of provided password
-                calculated_hash = scrypt.hash(p.encode(), salt, N, r, p)
+                calculated_hash = scrypt.hash(password.encode(), salt, N, r, p)
                 is_valid = calculated_hash == stored_hash
                 
                 logger.debug(f"Password verification result: {is_valid}")
