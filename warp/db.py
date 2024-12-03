@@ -1,6 +1,7 @@
 from functools import partial
 from time import sleep
 import sys
+import os
 
 from peewee import Table, SQL, fn, IntegrityError, DatabaseError, OperationalError
 import playhouse.db_url
@@ -91,8 +92,8 @@ def init(app):
 
 def update_admin_credentials():
     """Update admin credentials from environment variables if configured"""
-    admin_user = current_app.config.get('WARP_ADMIN_USER')
-    admin_pass = current_app.config.get('WARP_ADMIN_PASSWORD')
+    admin_user = os.environ.get('WARP_ADMIN_USER') or current_app.config.get('WARP_ADMIN_USER')
+    admin_pass = os.environ.get('WARP_ADMIN_PASSWORD') or current_app.config.get('WARP_ADMIN_PASSWORD')
     
     if not admin_user or not admin_pass:
         logger.info("No admin credentials configured in environment")

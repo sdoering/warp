@@ -20,8 +20,8 @@ def init_db():
     skip_admin_setup = os.environ.get('WARP_SKIP_ADMIN_SETUP', '').lower() in ('true', '1', 'yes')
     
     if not skip_admin_setup:
-        admin_user = os.environ.get('WARP_ADMIN_USER', 'wurstbrot')
-        admin_password = os.environ.get('WARP_ADMIN_PASSWORD', 'mitSenf')
+        admin_user = os.environ.get('WARP_ADMIN_USER') or current_app.config.get('WARP_ADMIN_USER', 'wurstbrot')
+        admin_password = os.environ.get('WARP_ADMIN_PASSWORD') or current_app.config.get('WARP_ADMIN_PASSWORD', 'mitSenf')
         
         try:
             admin = User.get(User.login == admin_user)
