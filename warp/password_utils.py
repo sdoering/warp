@@ -15,6 +15,10 @@ def generate_password_hash(password):
     # Generate hash using UTF-8 encoded password
     hash_bytes = scrypt.hash(password.encode('utf-8'), salt, N, r, p)
     
+    # Debug output for verification
+    print(f"Generated salt (base64): {base64.b64encode(salt).decode('utf-8')}")
+    print(f"Generated hash (base64): {base64.b64encode(hash_bytes).decode('utf-8')}")
+    
     # Encode salt and hash in base64
     salt_b64 = base64.b64encode(salt).decode('utf-8')
     hash_b64 = base64.b64encode(hash_bytes).decode('utf-8')

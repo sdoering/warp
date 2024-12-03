@@ -60,12 +60,17 @@ def login():
                 salt = hash_parts[1].encode()
                 stored_hash = base64.b64decode(hash_parts[2])
                 
-                # Calculate hash of provided password using same parameters
-                calculated_hash = scrypt.hash(password.encode('utf-8'), base64.b64decode(salt), N, r, p)
+                decoded_salt = base64.b64decode(salt)
                 
                 # Debug logging for verification process
                 logger.debug(f"Parameters: N={N}, r={r}, p={p}")
+                logger.debug(f"Input password length: {len(password)}")
                 logger.debug(f"Salt (base64): {salt.decode()}")
+                logger.debug(f"Salt (raw bytes): {decoded_salt.hex()}")
+                
+                # Calculate hash of provided password using same parameters
+                calculated_hash = scrypt.hash(password.encode('utf-8'), decoded_salt, N, r, p)
+                
                 logger.debug(f"Stored hash (base64): {base64.b64encode(stored_hash).decode()}")
                 logger.debug(f"Calculated hash (base64): {base64.b64encode(calculated_hash).decode()}")
                 
