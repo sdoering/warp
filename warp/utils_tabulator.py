@@ -165,8 +165,14 @@ def applyTabulatorToQuery(query,requestJSON,columnsMap = None,functionOperator =
         query = query.limit(limit)
 
     if "sort" in requestJSON:
+        order_clauses = []
         for i in requestJSON['sort']:
             if i["field"] in columnsMap:
-                query = query.order_by_extend( columnsMap[i["field"]].asc() if i["dir"] == "asc" else columnsMap[i["field"]].desc() )
+                order_clauses.append(
+                    columnsMap[i["field"]].asc() if i["dir"] == "asc" 
+                    else columnsMap[i["field"]].desc()
+                )
+        if order_clauses:
+            query = query.order_by(*order_clauses)
 
     return (query,lastPage)
