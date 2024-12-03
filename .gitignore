@@ -22,3 +22,4 @@ config/deploy.staging.yml
 # Kamal secrets
 .env
 .env*
+.aider*
