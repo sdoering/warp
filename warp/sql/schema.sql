@@ -13,7 +13,8 @@ CREATE TABLE users (
 );
 
 -- create initial admin with password 'noneshallpass'
-INSERT OR IGNORE INTO users VALUES ('admin','pbkdf2:sha256:260000$LdN4KNf6xzb0XlSu$810ca4acafd3b6955e6ebc39d2edafd582c8020ab87fd56e3cede1bfebb7df03','Admin',10);
+-- INSERT OR IGNORE INTO users VALUES ('admin','pbkdf2:sha256:260000$LdN4KNf6xzb0XlSu$810ca4acafd3b6955e6ebc39d2edafd582c8020ab87fd56e3cede1bfebb7df03','Admin',10);
+INSERT OR IGNORE INTO users VALUES ('admin','$scrypt$ln=16,r=8,p=1$YqyVMsZYy1nLWStFSInR2g$2YgVN0QgzxxqkZfdV9mM/4JUe3L3CEfriMtgnnnKx9o','Admin',10);
 
 CREATE INDEX users_account_type_idx ON users(account_type);
 
@@ -48,7 +49,7 @@ CREATE TABLE seat (
     name TEXT NOT NULL,
     x INTEGER NOT NULL,
     y INTEGER NOT NULL,
-    enabled BOOLEAN NOT NULL DEFAULT 1,
+    enabled INTEGER NOT NULL DEFAULT 1,
     FOREIGN KEY (zid) REFERENCES zone(id) ON DELETE CASCADE
 );
 
@@ -101,7 +102,7 @@ FOR EACH ROW
 BEGIN
     SELECT CASE
         WHEN NEW.fromts >= NEW.tots THEN
-            RAISE(ROLLBACK, 'Incorrect time')
+            RAISE(ABORT, 'Incorrect time')
         WHEN EXISTS (
             SELECT 1 FROM book b
             JOIN seat s ON b.sid = s.id
@@ -117,6 +118,6 @@ BEGIN
             AND b.fromts < NEW.tots
             AND b.tots > NEW.fromts
         ) THEN
-            RAISE(ROLLBACK, 'Overlapping time for this seat or users')
+            RAISE(ABORT, 'Overlapping time for this seat or users')
     END;
 END;
