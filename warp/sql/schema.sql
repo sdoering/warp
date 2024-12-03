@@ -1,5 +1,5 @@
 CREATE TABLE blobs (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id INTEGER PRIMARY KEY AUTOINCREMENT AS ROWID,
     mimetype TEXT NOT NULL,
     data BLOB NOT NULL,
     etag INTEGER NOT NULL
@@ -26,7 +26,7 @@ CREATE TABLE groups (
 );
 
 CREATE TABLE zone (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id INTEGER PRIMARY KEY AUTOINCREMENT AS ROWID,
     zone_group INTEGER NOT NULL,
     name TEXT NOT NULL,
     iid INTEGER,
@@ -43,7 +43,7 @@ CREATE TABLE zone_assign (
 );
 
 CREATE TABLE seat (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id INTEGER PRIMARY KEY AUTOINCREMENT AS ROWID,
     zid INTEGER NOT NULL,
     name TEXT NOT NULL,
     x INTEGER NOT NULL,
@@ -63,7 +63,7 @@ CREATE TABLE seat_assign (
 CREATE INDEX seat_zid ON seat(zid);
 
 CREATE TABLE book (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id INTEGER PRIMARY KEY AUTOINCREMENT AS ROWID,
     login TEXT NOT NULL,
     sid INTEGER NOT NULL,
     fromts INTEGER NOT NULL,
@@ -79,15 +79,16 @@ CREATE INDEX book_toTS ON book(tots);
 
 -- Replace materialized view with a regular view for SQLite
 CREATE VIEW user_to_zone_roles AS
-    WITH RECURSIVE zone_assign_expanded(login, zid, zone_role, account_type) AS (
-        SELECT za.login, za.zid, za.zone_role, u.account_type 
+    WITH RECURSIVE zone_assign_expanded(login, zid, zone_role, account_type, depth) AS (
+        SELECT za.login, za.zid, za.zone_role, u.account_type, 0 
         FROM zone_assign za
         JOIN users u ON za.login = u.login
         UNION ALL
-        SELECT g.login, za.zid, za.zone_role, u.account_type 
+        SELECT g.login, za.zid, za.zone_role, u.account_type, za.depth + 1
         FROM zone_assign_expanded za
         JOIN groups g ON g."group" = za.login
         JOIN users u ON g.login = u.login
+        WHERE za.depth < 100  -- Prevent infinite recursion
     )
     SELECT login, zid, MIN(zone_role) as zone_role
     FROM zone_assign_expanded
