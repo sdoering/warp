@@ -53,41 +53,36 @@ def login():
 bp.route('/login', methods=['GET', 'POST'])(login)
 
 def logout():
-    flask.session.clear()
-    return flask.redirect(flask.url_for('auth.login'))
+    session.clear()
+    return redirect(url_for('auth.login'))
 
 bp.route('/logout')(logout)
 
-def session():
-
-    if flask.request.blueprint == 'auth':
+def check_session():
+    if request.blueprint == 'auth':
         return
 
-    if flask.request.endpoint == 'static':
+    if request.endpoint == 'static':
         return
 
-    login = flask.session.get('login')
+    login = session.get('login')
 
     if login is None:
-        return flask.redirect(
-            flask.url_for('auth.login'))
+        return redirect(url_for('auth.login'))
 
-    latestValidSessionTime = utils.now() - 24*3600*flask.current_app.config['SESSION_LIFETIME']
-    lastLoginTime = flask.session.get('login_time')
+    latest_valid_time = utils.now() - 24*3600*current_app.config['SESSION_LIFETIME']
+    last_login_time = session.get('login_time')
 
-    if lastLoginTime is None or lastLoginTime < latestValidSessionTime:
-        return flask.redirect(
-            flask.url_for('auth.login'))
+    if last_login_time is None or last_login_time < latest_valid_time:
+        return redirect(url_for('auth.login'))
 
-    # check if user still exists and if it is not blocked
-    c = Users.select(Users.account_type).where(Users.login == login)
+    # Check if user still exists and is not blocked
+    user = User.query.filter_by(login=login).first()
 
-    if len(c) != 1 or c[0]['account_type'] >= ACCOUNT_TYPE_BLOCKED:
-        return flask.redirect(
-            flask.url_for('auth.login'))
+    if not user or user.account_type >= ACCOUNT_TYPE_BLOCKED:
+        return redirect(url_for('auth.login'))
 
-    flask.g.isAdmin = c[0]['account_type'] == ACCOUNT_TYPE_ADMIN
-    flask.g.login = login
+    g.isAdmin = user.account_type == ACCOUNT_TYPE_ADMIN
+    g.login = login
 
-
-bp.before_app_request(session)
+bp.before_app_request(check_session)
