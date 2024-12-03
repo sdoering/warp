@@ -16,8 +16,8 @@ setup(
         'sqlalchemy>=1.4.0'
     ],
     python_requires='>=3.8',
-    description='Warp booking system',
-    author='Your Name',
-    author_email='your.email@example.com',
-    url='https://github.com/yourusername/warp',
+    description='Warp Desk Booking System',
+    author='Sven Döring',
+    author_email='code@moorwald.com',
+    url='https://github.com/sdoering/warp',
 )
