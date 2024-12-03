@@ -1,6 +1,7 @@
 import flask
 import logging
-from werkzeug.security import check_password_hash
+import scrypt
+import base64
 from warp.db import *
 from . import utils
 
@@ -42,8 +43,30 @@ def login():
                 flask.flash("Wrong username or password")
                 return flask.render_template('login.html')
             
-            is_valid = check_password_hash(c[0]['password'], p)
-            logger.debug(f"Password verification result: {is_valid}")
+            try:
+                # Parse stored hash format: scrypt:N:r:p$salt$hash
+                hash_parts = c[0]['password'].split('$')
+                if len(hash_parts) != 3:
+                    raise ValueError("Invalid hash format")
+                
+                params = hash_parts[0].split(':')
+                if len(params) != 4 or params[0] != 'scrypt':
+                    raise ValueError("Invalid hash parameters")
+                
+                N = int(params[1])
+                r = int(params[2])
+                p = int(params[3])
+                salt = hash_parts[1].encode()
+                stored_hash = base64.b64decode(hash_parts[2])
+                
+                # Calculate hash of provided password
+                calculated_hash = scrypt.hash(p.encode(), salt, N, r, p)
+                is_valid = calculated_hash == stored_hash
+                
+                logger.debug(f"Password verification result: {is_valid}")
+            except Exception as e:
+                logger.error(f"Password verification error: {e}")
+                is_valid = False
             
             if is_valid:
                 account_type = c[0]['account_type']
