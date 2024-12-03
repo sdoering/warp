@@ -6,7 +6,6 @@ version = "2.0"
 def getRequirements():
     with open('requirements.txt', 'r') as file:
         reqs = file.readlines()
-    reqs.append('scrypt>=0.8.20')
     return reqs
 
 #def getVersion():
