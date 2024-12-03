@@ -5,7 +5,7 @@ version = "2.0"
 
 def getRequirements():
     with open('requirements.txt', 'r') as file:
-        reqs = file.readlines()yield
+        reqs = file.readlines()
     return reqs
 
 #def getVersion():
