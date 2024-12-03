@@ -13,8 +13,7 @@ CREATE TABLE users (
 );
 
 -- create initial admin with password 'noneshallpass'
--- INSERT OR IGNORE INTO users VALUES ('admin','pbkdf2:sha256:260000$LdN4KNf6xzb0XlSu$810ca4acafd3b6955e6ebc39d2edafd582c8020ab87fd56e3cede1bfebb7df03','Admin',10);
-INSERT OR IGNORE INTO users VALUES ('admin','$scrypt$ln=16,r=8,p=1$YqyVMsZYy1nLWStFSInR2g$2YgVN0QgzxxqkZfdV9mM/4JUe3L3CEfriMtgnnnKx9o','Admin',10);
+INSERT OR IGNORE INTO users VALUES ('admin','scrypt:32768:8:1$YqyVMsZYy1nLWStFSInR2g$2YgVN0QgzxxqkZfdV9mM/4JUe3L3CEfriMtgnnnKx9o','Admin',10);
 
 CREATE INDEX users_account_type_idx ON users(account_type);
 
