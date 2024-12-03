@@ -1,8 +1,10 @@
 import flask
+import logging
 from werkzeug.security import check_password_hash
 from warp.db import *
 from . import utils
 
+logger = logging.getLogger(__name__)
 bp = flask.Blueprint('auth', __name__)
 
 # NOTE:
@@ -23,17 +25,28 @@ def login():
     flask.session.clear()
 
     if flask.request.method == 'POST':
-
         u = flask.request.form.get('login')
-        p =  flask.request.form.get('password')
-
+        p = flask.request.form.get('password')
+        
+        logger.info(f"Login attempt for user: {u}")
+        
         c = Users.select().where((Users.login == u) & (Users.account_type != ACCOUNT_TYPE_GROUP))
-
-        if len(c) == 1 \
-           and c[0]['password'] is not None \
-           and check_password_hash(c[0]['password'],p):
-
-            account_type = c[0]['account_type']
+        
+        logger.debug(f"Found {len(c)} matching users")
+        
+        if len(c) == 1:
+            logger.debug(f"User found, stored password hash: {c[0]['password']}")
+            
+            if c[0]['password'] is None:
+                logger.warning(f"User {u} has no password set")
+                flask.flash("Wrong username or password")
+                return flask.render_template('login.html')
+            
+            is_valid = check_password_hash(c[0]['password'], p)
+            logger.debug(f"Password verification result: {is_valid}")
+            
+            if is_valid:
+                account_type = c[0]['account_type']
 
             if account_type == ACCOUNT_TYPE_BLOCKED:
                 flask.flash("Your account is blocked.")

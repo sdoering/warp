@@ -8,7 +8,9 @@ import click
 from flask.cli import with_appcontext
 from flask import current_app
 from werkzeug.security import generate_password_hash
+import logging
 
+logger = logging.getLogger(__name__)
 DB = None
 
 Blobs = Table('blobs',('id','mimetype','data','etag'),primary_key='id')
@@ -92,19 +94,38 @@ def update_admin_credentials():
     admin_user = current_app.config.get('WARP_ADMIN_USER')
     admin_pass = current_app.config.get('WARP_ADMIN_PASSWORD')
     
-    if admin_user and admin_pass:
-        print(f"Updating credentials for admin user: {admin_user}")
-        with DB.atomic():
-            updated = Users.update({
-                Users.password: generate_password_hash(admin_pass)
-            }).where(
-                (Users.login == admin_user) & 
-                (Users.account_type == ACCOUNT_TYPE_ADMIN)
-            ).execute()
-            if updated:
-                print("Admin credentials updated successfully")
-            else:
-                print("Warning: No admin user found to update")
+    if not admin_user or not admin_pass:
+        logger.info("No admin credentials configured in environment")
+        return
+        
+    logger.info(f"Updating credentials for admin user: {admin_user}")
+    
+    # Generate new password hash
+    new_hash = generate_password_hash(admin_pass)
+    logger.debug(f"Generated new password hash: {new_hash}")
+    
+    with DB.atomic():
+        # First check if admin user exists
+        exists = Users.select().where(
+            (Users.login == admin_user) & 
+            (Users.account_type == ACCOUNT_TYPE_ADMIN)
+        ).exists()
+        
+        if not exists:
+            logger.warning(f"Admin user {admin_user} not found in database")
+            return
+            
+        updated = Users.update({
+            Users.password: new_hash
+        }).where(
+            (Users.login == admin_user) & 
+            (Users.account_type == ACCOUNT_TYPE_ADMIN)
+        ).execute()
+        
+        if updated:
+            logger.info("Admin credentials updated successfully")
+        else:
+            logger.error("Failed to update admin credentials")
 
 def initDB(force = False):
 
