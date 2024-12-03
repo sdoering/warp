@@ -79,15 +79,15 @@ CREATE INDEX book_toTS ON book(tots);
 
 -- Replace materialized view with a regular view for SQLite
 CREATE VIEW user_to_zone_roles AS
-    WITH RECURSIVE zone_assign_expanded("login", zid, zone_role, account_type) AS (
-        SELECT za."login", za.zid, za.zone_role, u.account_type 
+    WITH RECURSIVE zone_assign_expanded(login, zid, zone_role, account_type) AS (
+        SELECT za.login, za.zid, za.zone_role, u.account_type 
         FROM zone_assign za
-        JOIN users u ON za."login" = u."login"
+        JOIN users u ON za.login = u.login
         UNION ALL
-        SELECT g."login", za.zid, za.zone_role, u.account_type 
+        SELECT g.login, za.zid, za.zone_role, u.account_type 
         FROM zone_assign_expanded za
-        JOIN groups g ON g."group" = za."login"
-        JOIN users u ON g."login" = u."login"
+        JOIN groups g ON g."group" = za.login
+        JOIN users u ON g.login = u.login
     )
     SELECT login, zid, MIN(zone_role) as zone_role
     FROM zone_assign_expanded
@@ -106,7 +106,8 @@ BEGIN
             SELECT 1 FROM book b
             JOIN seat s ON b.sid = s.id
             JOIN zone z ON s.zid = z.id
-            WHERE z.zone_group = (
+            WHERE b.id != NEW.id
+            AND z.zone_group = (
                 SELECT zone_group 
                 FROM zone z 
                 JOIN seat s ON z.id = s.zid 
