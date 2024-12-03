@@ -2,6 +2,7 @@ import flask
 import logging
 import scrypt
 import base64
+import hmac
 from warp.db import *
 from . import utils
 
@@ -59,15 +60,17 @@ def login():
                 salt = hash_parts[1].encode()
                 stored_hash = base64.b64decode(hash_parts[2])
                 
-                # Calculate hash of provided password
+                # Calculate hash of provided password using same parameters
                 calculated_hash = scrypt.hash(password.encode('utf-8'), base64.b64decode(salt), N, r, p)
                 
+                # Debug logging for verification process
+                logger.debug(f"Parameters: N={N}, r={r}, p={p}")
                 logger.debug(f"Salt (base64): {salt.decode()}")
-                logger.debug(f"Stored hash (hex): {stored_hash.hex()}")
-                logger.debug(f"Calculated hash (hex): {calculated_hash.hex()}")
+                logger.debug(f"Stored hash (base64): {base64.b64encode(stored_hash).decode()}")
+                logger.debug(f"Calculated hash (base64): {base64.b64encode(calculated_hash).decode()}")
                 
                 # Compare raw hash bytes
-                is_valid = calculated_hash == stored_hash
+                is_valid = hmac.compare_digest(calculated_hash, stored_hash)
                 
                 logger.debug(f"Hash verification completed")
                 logger.debug(f"Password verification result: {is_valid}")
