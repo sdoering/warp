@@ -1,13 +1,11 @@
-import flask
+from flask import Blueprint, request, flash, session, redirect, url_for, render_template, g
+from werkzeug.security import check_password_hash
 import logging
-import scrypt
-import base64
-import hmac
-from warp.db import *
 from . import utils
+from .db import User, ACCOUNT_TYPE_BLOCKED, ACCOUNT_TYPE_ADMIN, ACCOUNT_TYPE_GROUP
 
 logger = logging.getLogger(__name__)
-bp = flask.Blueprint('auth', __name__)
+bp = Blueprint('auth', __name__)
 
 # NOTE:
 # In this module I don't use decorators (route and before_app_request) to register
@@ -19,83 +17,38 @@ bp = flask.Blueprint('auth', __name__)
 
 
 def login():
+    # Clear session to force re-login
+    session.clear()
 
-    # clear session to force re-login
-    # we should not do it via logout as in case of SSO
-    # we will logout from SSO, and we just want to issue
-    # an extra request to SSO
-    flask.session.clear()
-
-    if flask.request.method == 'POST':
-        username = flask.request.form.get('login')
-        password = flask.request.form.get('password')
+    if request.method == 'POST':
+        username = request.form.get('login')
+        password = request.form.get('password')
         
         logger.info(f"Login attempt for user: {username}")
         
-        c = Users.select().where((Users.login == username) & (Users.account_type != ACCOUNT_TYPE_GROUP))
+        user = User.query.filter_by(login=username).first()
         
-        logger.debug(f"Found {len(c)} matching users")
-        
-        if len(c) == 1:
-            logger.debug(f"User found, stored password hash: {c[0]['password']}")
+        if user and user.account_type != ACCOUNT_TYPE_GROUP:
+            if user.password is None:
+                logger.warning(f"User {username} has no password set")
+                flash("Wrong username or password")
+                return render_template('login.html')
             
-            if c[0]['password'] is None:
-                logger.warning(f"User {u} has no password set")
-                flask.flash("Wrong username or password")
-                return flask.render_template('login.html')
-            
-            try:
-                # Parse stored hash format: scrypt:N:r:p$salt$hash
-                hash_parts = c[0]['password'].split('$')
-                if len(hash_parts) != 3:
-                    raise ValueError("Invalid hash format")
-                
-                params = hash_parts[0].split(':')
-                if len(params) != 4 or params[0] != 'scrypt':
-                    raise ValueError("Invalid hash parameters")
-                
-                N = int(params[1])
-                r = int(params[2])
-                p = int(params[3])
-                salt = hash_parts[1].encode()
-                stored_hash = base64.b64decode(hash_parts[2])
-                
-                decoded_salt = base64.b64decode(salt)
-                
-                # Debug logging for verification process
-                logger.debug(f"Parameters: N={N}, r={r}, p={p}")
-                logger.debug(f"Input password length: {len(password)}")
-                logger.debug(f"Salt (base64): {salt.decode()}")
-                logger.debug(f"Salt (raw bytes): {decoded_salt.hex()}")
-                
-                # Calculate hash of provided password using same parameters
-                calculated_hash = scrypt.hash(password.encode('utf-8'), decoded_salt, N, r, p)
-                
-                logger.debug(f"Stored hash (base64): {base64.b64encode(stored_hash).decode()}")
-                logger.debug(f"Calculated hash (base64): {base64.b64encode(calculated_hash).decode()}")
-                
-                # Compare raw hash bytes
-                is_valid = hmac.compare_digest(calculated_hash, stored_hash)
-                
-                logger.debug(f"Hash verification completed")
-                logger.debug(f"Password verification result: {is_valid}")
-            except Exception as e:
-                logger.error(f"Password verification error: {e}")
-                is_valid = False
-            
-            if is_valid:
-                account_type = c[0]['account_type']
-                if account_type == ACCOUNT_TYPE_BLOCKED:
-                    flask.flash("Your account is blocked.")
+            if check_password_hash(user.password, password):
+                if user.account_type == ACCOUNT_TYPE_BLOCKED:
+                    logger.warning(f"Blocked user attempted login: {username}")
+                    flash("Your account is blocked.")
                 else:
-                    flask.session['login'] = c[0]['login']
-                    flask.session['login_time'] = utils.now()
-                    return flask.redirect(flask.url_for('view.index'))
-
-        else:
-            flask.flash("Wrong username or password")
-
-    return flask.render_template('login.html')
+                    logger.info(f"Successful login: {username}")
+                    session['login'] = username
+                    session['login_time'] = utils.now()
+                    return redirect(url_for('view.index'))
+            else:
+                logger.warning(f"Invalid password for user: {username}")
+        
+        flash("Wrong username or password")
+        
+    return render_template('login.html')
 
 bp.route('/login', methods=['GET', 'POST'])(login)
 
