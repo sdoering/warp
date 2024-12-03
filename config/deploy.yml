@@ -29,6 +29,7 @@ env:
   clear:
     WARP_DATABASE: "sqlite:////opt/warp/data/warp.db"
     WARP_DATABASE_INIT_SCRIPT: '["/opt/warp/sql/sqlite_schema.sql"]'
+    WARP_FORCE_ADMIN_UPDATE: 'true'
 
 volumes:
   - /var/lib/warp/data:/opt/warp/data:rw,Z
