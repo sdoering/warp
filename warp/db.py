@@ -29,23 +29,31 @@ class Group(db.Model):
 
 class Zone(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    zone_group = db.Column(db.String)
+    zone_group = db.Column(db.String, index=True)
     name = db.Column(db.String)
     iid = db.Column(db.Integer)
+    
+    # Relationships
+    assignments = db.relationship('ZoneAssign', backref='zone', lazy='dynamic')
+    seats = db.relationship('Seat', backref='zone', lazy='dynamic')
 
 class ZoneAssign(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    zid = db.Column(db.Integer, db.ForeignKey('zone.id'))
-    login = db.Column(db.String)
+    zid = db.Column(db.Integer, db.ForeignKey('zone.id'), index=True)
+    login = db.Column(db.String, index=True)
     zone_role = db.Column(db.Integer)
 
 class Seat(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    zid = db.Column(db.Integer, db.ForeignKey('zone.id'))
+    zid = db.Column(db.Integer, db.ForeignKey('zone.id'), index=True)
     name = db.Column(db.String)
     x = db.Column(db.Integer)
     y = db.Column(db.Integer)
     enabled = db.Column(db.Boolean, default=True)
+    
+    # Relationships
+    assignments = db.relationship('SeatAssign', backref='seat', lazy='dynamic')
+    bookings = db.relationship('Book', backref='seat', lazy='dynamic')
 
 class SeatAssign(db.Model):
     id = db.Column(db.Integer, primary_key=True)
