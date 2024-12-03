@@ -107,9 +107,9 @@ def zoneImage(zid):
 
     if not flask.g.isAdmin:
 
-        zoneRole = UserToZoneRoles.select(UserToZoneRoles.zone_role) \
-                                .where( (UserToZoneRoles.zid == zid) & (UserToZoneRoles.login == flask.g.login) ) \
-                                .scalar()
+        zoneRole = db.session.query(ZoneAssign.zone_role)\
+            .filter(ZoneAssign.zid == zid, ZoneAssign.login == flask.g.login)\
+            .scalar()
         if zoneRole is None:
             flask.abort(403)
 
