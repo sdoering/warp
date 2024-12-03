@@ -4,3 +4,4 @@ xlsxwriter
 peewee>=3.17.0
 orjson
 ldap3
+scrypt>=0.8.20  # Add this line
