@@ -1,3 +1,4 @@
+import os
 from warp import db
 from warp.model import *
 from warp.password_utils import generate_password_hash
@@ -19,9 +20,11 @@ def init_db():
     try:
         User.get(User.login == 'admin')
     except User.DoesNotExist:
+        admin_user = os.environ.get('WARP_ADMIN_USER', 'admin')
+        admin_password = os.environ.get('WARP_ADMIN_PASSWORD', 'changeme')
         User.create(
-            login='admin',
-            password=generate_password_hash('noneshallpass'),
+            login=admin_user,
+            password=generate_password_hash(admin_password),
             name='Admin',
             account_type=10
         )
