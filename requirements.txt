@@ -1,6 +1,6 @@
 flask == 2.2.*
 jsonschema
 xlsxwriter
-peewee
+peewee>=3.17.0
 orjson
 ldap3
