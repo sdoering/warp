@@ -60,7 +60,12 @@ def login():
                 stored_hash = base64.b64decode(hash_parts[2])
                 
                 # Calculate hash of provided password
-                calculated_hash = scrypt.hash(password.encode(), base64.b64decode(salt), N, r, p)
+                calculated_hash = scrypt.hash(password.encode('utf-8'), base64.b64decode(salt), N, r, p)
+                
+                logger.debug(f"Salt (base64): {salt.decode()}")
+                logger.debug(f"Stored hash (hex): {stored_hash.hex()}")
+                logger.debug(f"Calculated hash (hex): {calculated_hash.hex()}")
+                
                 # Compare raw hash bytes
                 is_valid = calculated_hash == stored_hash
                 
