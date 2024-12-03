@@ -4,6 +4,7 @@ import sys
 import os
 
 from peewee import Table, SQL, fn, IntegrityError, DatabaseError, OperationalError
+from warp.init_db import init_db as initialize_database
 import playhouse.db_url
 import click
 from flask.cli import with_appcontext
@@ -175,10 +176,12 @@ def initDB(force = False):
 
                 # in case it is cleaned up in the above scripts (or force == True)
                 DB.execute_sql(f"CREATE TABLE IF NOT EXISTS {_INITIALIZED_TABLE}();")
-
-            print('The database initialized.')
-            update_admin_credentials()
-            break
+                
+                # Initialize database with tables and admin user
+                initialize_database()
+                print('The database initialized.')
+                update_admin_credentials()
+                break
 
         except OperationalError:
 
