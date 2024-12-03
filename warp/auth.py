@@ -59,10 +59,14 @@ def login():
                 salt = hash_parts[1].encode()
                 stored_hash = base64.b64decode(hash_parts[2])
                 
-                # Calculate hash of provided password
+                # Calculate hash of provided password and encode in base64
                 calculated_hash = scrypt.hash(password.encode(), salt, N, r, p)
-                is_valid = calculated_hash == stored_hash
+                calculated_hash_b64 = base64.b64encode(calculated_hash)
+                stored_hash_b64 = base64.b64encode(stored_hash)
+                is_valid = calculated_hash_b64 == stored_hash_b64
                 
+                logger.debug(f"Calculated hash (b64): {calculated_hash_b64}")
+                logger.debug(f"Stored hash (b64): {stored_hash_b64}")
                 logger.debug(f"Password verification result: {is_valid}")
             except Exception as e:
                 logger.error(f"Password verification error: {e}")
