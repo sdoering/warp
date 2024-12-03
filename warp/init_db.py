@@ -28,26 +28,26 @@ def init_db():
     
     logger.info(f"Setting up admin user: {admin_user}")
     logger.debug(f"Admin user source: {'environment' if os.environ.get('WARP_ADMIN_USER') else 'config'}")
-        
-        # Always create or update the admin user
-        admin_hash = generate_password_hash(admin_password)
-        
-        try:
-            admin = User.get(User.login == admin_user)
-            logger.info(f"Found existing admin user: {admin_user}")
-            admin.password = admin_hash
-            admin.account_type = 10  # Admin type
-            admin.save()
-            logger.info(f"Successfully updated existing admin user '{admin_user}'")
-        except User.DoesNotExist:
-            logger.info(f"No existing admin user found, creating new user: {admin_user}")
-            User.create(
-                login=admin_user,
-                password=admin_hash,
-                name='Admin',
-                account_type=10
-            )
-            logger.info(f"Successfully created new admin user '{admin_user}'")
+    
+    # Always create or update the admin user
+    admin_hash = generate_password_hash(admin_password)
+    
+    try:
+        admin = User.get(User.login == admin_user)
+        logger.info(f"Found existing admin user: {admin_user}")
+        admin.password = admin_hash
+        admin.account_type = 10  # Admin type
+        admin.save()
+        logger.info(f"Successfully updated existing admin user '{admin_user}'")
+    except User.DoesNotExist:
+        logger.info(f"No existing admin user found, creating new user: {admin_user}")
+        User.create(
+            login=admin_user,
+            password=admin_hash,
+            name='Admin',
+            account_type=10
+        )
+        logger.info(f"Successfully created new admin user '{admin_user}'")
 
 if __name__ == '__main__':
     init_db()
